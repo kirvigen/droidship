@@ -5,7 +5,6 @@
 через AI-агента.
 
 [![ci](https://github.com/kirvigen/droidship/actions/workflows/ci.yml/badge.svg)](https://github.com/kirvigen/droidship/actions/workflows/ci.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/kirvigen/droidship)](https://goreportcard.com/report/github.com/kirvigen/droidship)
 [![release](https://img.shields.io/github/v/release/kirvigen/droidship)](https://github.com/kirvigen/droidship/releases)
 [![Go](https://img.shields.io/github/go-mod/go-version/kirvigen/droidship)](go.mod)
 [![license](https://img.shields.io/github/license/kirvigen/droidship)](LICENSE)
