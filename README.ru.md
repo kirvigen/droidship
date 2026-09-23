@@ -13,14 +13,7 @@
 
 [Read in English](README.md)
 
-```console
-$ droidship status com.example
-STORE       TRACK       VERSION      STATUS                 ROLLOUT  ID
-gplay       production  30           completed
-rustore     manual      1.4.16 (29)  MODERATION                      2051234567
-appgallery  latest      1.4.16 (29)  pending update review           1998765432101234567
-appgallery  live        1.4.11 (23)  on shelf
-```
+<p align="center"><img src="docs/assets/demo.gif" alt="droidship: status, отзывы, карточка и неподдерживаемая команда в трёх сторах" width="100%"></p>
 
 - **Одна команда вместо трёх консолей.** `publish`, `release`, `rollout`, `reviews` и `reply` работают
   одинаково во всех сторах. `--store all` запускает их везде сразу.
@@ -72,6 +65,29 @@ droidship reviews com.example --unanswered        # все сторы, новы�
 
 Неподдерживаемая команда завершается с кодом **3** и объяснением в одну строку. Остальные сторы
 при этом отрабатывают.
+
+## Почему не fastlane?
+
+fastlane — стандарт автоматизации мобильных релизов. Если вы выпускаете и iOS или у вас уже есть
+рабочий Fastfile, оставьте его. В ядре fastlane есть Google Play (`supply`), а RuStore и AppGallery
+подключаются плагинами сообщества, например
+[fastlane-plugin-huawei_appgallery_connect](https://github.com/shr3jn/fastlane-plugin-huawei_appgallery_connect)
+и [fastlane-plugin-rustore](https://github.com/stfbee/fastlane-plugin-rustore). У каждого плагина свои
+параметры и свой набор возможностей.
+
+droidship решает более узкую задачу и требует меньше:
+
+| | droidship | fastlane + плагины |
+|---|---|---|
+| Установка | один статический бинарник | Ruby, Bundler, по гему на стор |
+| Сторы | Google Play, RuStore, AppGallery в одном инструменте | Play в ядре; RuStore и AppGallery — отдельные плагины сообщества |
+| Одна команда для всех сторов | `droidship publish <pkg> --store all` | по lane на стор, у каждого плагина свои опции |
+| Отзывы | чтение и ответы во всех трёх, общий список | нет в ядре fastlane |
+| Для агентов | `--json` везде, фиксированные коды выхода, скиллы в комплекте | логи для людей |
+| Поведение при загрузке | в очередь; вживую только после `release` | как напишете в lane |
+| iOS, скриншоты, подпись, сборка | нет | да, весь конвейер |
+
+Их можно совмещать: вызывать droidship из lane через `sh("droidship publish …")`.
 
 ## Доступы
 

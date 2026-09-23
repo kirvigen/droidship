@@ -13,14 +13,7 @@ AI agent.
 
 [Читать на русском](README.ru.md)
 
-```console
-$ droidship status com.example
-STORE       TRACK       VERSION      STATUS                 ROLLOUT  ID
-gplay       production  30           completed
-rustore     manual      1.4.16 (29)  MODERATION                      2051234567
-appgallery  latest      1.4.16 (29)  pending update review           1998765432101234567
-appgallery  live        1.4.11 (23)  on shelf
-```
+<p align="center"><img src="docs/assets/demo.gif" alt="droidship status, reviews, listing and an unsupported command across three stores" width="100%"></p>
 
 - **One command, three consoles.** `publish`, `release`, `rollout`, `reviews` and `reply` work the
   same way in every store. `--store all` runs them everywhere at once.
@@ -70,6 +63,29 @@ droidship reviews com.example --unanswered        # every store, newest first
 ³ The RuStore API has no store-page read.
 
 An unsupported command exits with code **3** and a one-line reason. The other stores still run.
+
+## Why not fastlane?
+
+fastlane is the standard for mobile release automation. If you also ship iOS, or already have a
+Fastfile that works, keep it. Its core covers Google Play (`supply`); RuStore and AppGallery come
+from community plugins such as
+[fastlane-plugin-huawei_appgallery_connect](https://github.com/shr3jn/fastlane-plugin-huawei_appgallery_connect)
+and [fastlane-plugin-rustore](https://github.com/stfbee/fastlane-plugin-rustore), each with its own
+parameters and coverage.
+
+droidship does a narrower job, with less:
+
+| | droidship | fastlane + plugins |
+|---|---|---|
+| Install | one static binary | Ruby, Bundler, a gem per store |
+| Stores | Google Play, RuStore, AppGallery in one tool | Play in core; RuStore and AppGallery in separate community plugins |
+| One command for every store | `droidship publish <pkg> --store all` | a lane per store, each plugin with its own options |
+| Reviews | read and answer in all three, one merged list | not part of fastlane core |
+| For agents | `--json` everywhere, fixed exit codes, bundled agent skills | logs written for people |
+| Default on upload | staged; nothing is live until `release` | whatever the lane does |
+| iOS, screenshots, signing, builds | no | yes, the whole pipeline |
+
+They also combine: call droidship from a lane with `sh("droidship publish …")`.
 
 ## Credentials
 
