@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/assets/banner.png" alt="droidship: один CLI для Google Play, RuStore и Huawei AppGallery" width="100%"></p>
+
 # droidship
 
 **Один CLI для Android-релизов в Google Play, RuStore и Huawei AppGallery.** Залить сборку, поставить

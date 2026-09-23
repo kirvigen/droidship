@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/assets/banner.png" alt="droidship: one CLI for Google Play, RuStore and Huawei AppGallery" width="100%"></p>
+
 # droidship
 
 **Ship Android apps to Google Play, RuStore and Huawei AppGallery from one CLI.** Upload a build,
