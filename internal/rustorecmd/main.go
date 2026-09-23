@@ -12,6 +12,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/kirvigen/droidship/internal/config"
 	"github.com/kirvigen/droidship/internal/rustore"
 	"github.com/kirvigen/droidship/internal/version"
 )
@@ -33,8 +34,9 @@ Usage:
   droidship rustore version
 
 Credentials (RuStore Console → Company/Developer → API RuStore):
-  RUSTORE_KEY_ID   key id
-  RUSTORE_API_KEY  private key, base64 as issued by the console
+  DROIDSHIP_RUSTORE_KEY_ID       key id                      (or RUSTORE_KEY_ID)
+  DROIDSHIP_RUSTORE_PRIVATE_KEY  private key, base64 as issued (or RUSTORE_API_KEY)
+or "rustore": {"key_id": "…", "private_key": "…"} in ~/.config/droidship/config.json.
 `
 
 // Run executes the store namespace with the arguments that follow the store
@@ -96,12 +98,11 @@ func Run(args []string) int {
 }
 
 func newClientFromEnv() (*rustore.Client, error) {
-	keyID := os.Getenv("RUSTORE_KEY_ID")
-	key := os.Getenv("RUSTORE_API_KEY")
-	if keyID == "" || key == "" {
-		return nil, fmt.Errorf("set RUSTORE_KEY_ID and RUSTORE_API_KEY (RuStore Console → Company/Developer → API RuStore)")
+	c, err := config.RuStore()
+	if err != nil {
+		return nil, err
 	}
-	return rustore.New(keyID, key)
+	return rustore.New(c.KeyID, c.PrivateKey)
 }
 
 func cmdAuth(ctx context.Context, c *rustore.Client) error {

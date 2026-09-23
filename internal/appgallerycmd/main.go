@@ -37,15 +37,16 @@ Usage:
 Every command also takes --app-id, --package and --region.
 
 Credentials (AppGallery Connect -> Users and permissions -> API key -> Connect API).
-Every variable also answers to the HUAWEI_ prefix:
+Every variable also answers to the DROIDSHIP_APPGALLERY_ and HUAWEI_ prefixes:
   HSTORE_CLIENT_ID      client id of the API client
   HSTORE_CLIENT_SECRET  client secret of the API client
   HSTORE_APP_ID         app id, e.g. 118236677 (or pass --app-id)
   HSTORE_PACKAGE        package name, resolved to an app id (or pass --package)
   HSTORE_REGION         global (default) | ru | eu | sg, or a full https:// host
 
-Instead of the environment, droidship reads ~/.config/hstore/credentials.json:
-  {"client_id": "…", "client_secret": "…", "app_id": "118236677", "region": "global"}
+Instead of the environment, droidship reads ~/.config/droidship/config.json
+(or the old ~/.config/hstore/credentials.json):
+  {"appgallery": {"client_id": "…", "client_secret": "…", "app_id": "118236677", "region": "global"}}
 
 Times are AppGallery timestamps, e.g. 2026-09-05T10:00:00+0300.
 `

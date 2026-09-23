@@ -9,11 +9,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"text/tabwriter"
 
+	"github.com/kirvigen/droidship/internal/config"
 	"github.com/kirvigen/droidship/internal/play"
 	"github.com/kirvigen/droidship/internal/version"
 )
@@ -63,9 +63,10 @@ not the applicationId. sync writes drafts; publish makes them visible.
 
 Credentials — a Google Cloud service account JSON key, granted access in
 Play Console → Users and permissions:
-  --key PATH            explicit path
-  GPLAY_SA_JSON         path in the environment
-  ~/.config/gplay/      key.json, or the only *.json file in the directory
+  --key PATH                explicit path
+  DROIDSHIP_GPLAY_KEY       path in the environment (GPLAY_SA_JSON works too)
+  ~/.config/droidship/config.json   {"gplay": {"key": "PATH"}}
+  ~/.config/gplay/          key.json, or the only *.json file in the directory
 `
 
 // Run executes the store namespace with the arguments that follow the store
@@ -175,37 +176,10 @@ func extractKeyFlag(args []string) (string, []string, error) {
 }
 
 // resolveKeyPath finds the service account key: explicit flag, environment,
-// then the conventional directory.
+// the droidship config file, then the legacy ~/.config/gplay directory.
 func resolveKeyPath(explicit string) (string, error) {
-	if explicit != "" {
-		return explicit, nil
-	}
-	if env := os.Getenv("GPLAY_SA_JSON"); env != "" {
-		return env, nil
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	dir := filepath.Join(home, ".config", "gplay")
-	if def := filepath.Join(dir, "key.json"); fileExists(def) {
-		return def, nil
-	}
-	matches, _ := filepath.Glob(filepath.Join(dir, "*.json"))
-	if len(matches) == 1 {
-		return matches[0], nil
-	}
-	if len(matches) > 1 {
-		sort.Strings(matches)
-		return "", fmt.Errorf("several keys in %s — pass --key or set GPLAY_SA_JSON:\n  %s",
-			dir, strings.Join(matches, "\n  "))
-	}
-	return "", fmt.Errorf("no service account key found: pass --key PATH, set GPLAY_SA_JSON, or put one in %s", dir)
-}
-
-func fileExists(p string) bool {
-	st, err := os.Stat(p)
-	return err == nil && !st.IsDir()
+	path, _, err := config.GPlayKey(explicit)
+	return path, err
 }
 
 func newClient(explicitKey string) (*play.Client, error) {

@@ -166,9 +166,11 @@ func TestOneLine(t *testing.T) {
 func isolateCredentials(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("DROIDSHIP_CONFIG", "")
 	t.Setenv("HSTORE_CONFIG_DIR", dir)
 	t.Setenv("HSTORE_CREDENTIALS", "")
-	for _, prefix := range []string{"HSTORE_", "HUAWEI_"} {
+	for _, prefix := range []string{"DROIDSHIP_APPGALLERY_", "HSTORE_", "HUAWEI_"} {
 		for _, name := range []string{"CLIENT_ID", "CLIENT_SECRET", "APP_ID", "REGION", "PACKAGE"} {
 			t.Setenv(prefix+name, "")
 		}
