@@ -249,7 +249,11 @@ func verbReviews(v *verbRun) error {
 	if q.Package, err = v.need(0, "<package>"); err != nil {
 		return err
 	}
-	results := v.each(func(s store.Store) (any, error) { return s.Reviews(v.ctx, q) })
+	results := v.each(func(s store.Store) (any, error) {
+		list, err := s.Reviews(v.ctx, q)
+		sortReviews(list)
+		return list, err
+	})
 	if v.json {
 		// One flat, newest-first array across stores.
 		v.code = exitCode(results)

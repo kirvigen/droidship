@@ -142,7 +142,7 @@ func AppGallery() (AppGalleryCreds, error) {
 		AppID:        agEnv("APP_ID"),
 		Region:       agEnv("REGION"),
 		Package:      agEnv("PACKAGE"),
-		Source:       "env",
+		Source:       "env " + agEnvName("CLIENT_ID"),
 	}
 	if env.ClientID != "" && env.ClientSecret != "" {
 		return env, nil
@@ -173,6 +173,16 @@ func agEnv(name string) string {
 	for _, prefix := range appGalleryPrefixes {
 		if v := os.Getenv(prefix + name); v != "" {
 			return v
+		}
+	}
+	return ""
+}
+
+// agEnvName is the variable agEnv read a setting from.
+func agEnvName(name string) string {
+	for _, prefix := range appGalleryPrefixes {
+		if os.Getenv(prefix+name) != "" {
+			return prefix + name
 		}
 	}
 	return ""

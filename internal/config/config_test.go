@@ -125,13 +125,17 @@ func TestAppGalleryEnvBeatsFileFieldByField(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if c.ClientID != "f-id" || c.ClientSecret != "f-secret" || c.Region != "ru" || c.AppID != "42" {
+	if c.ClientID != "f-id" || c.ClientSecret != "f-secret" || c.Region != "ru" || c.AppID != "42" || c.Source != "config.json" {
 		t.Fatalf("merge: %+v", c)
 	}
 	t.Setenv("DROIDSHIP_APPGALLERY_CLIENT_ID", "e-id")
 	t.Setenv("HSTORE_CLIENT_ID", "legacy-id")
 	if c, _ := AppGallery(); c.ClientID != "e-id" {
 		t.Fatalf("DROIDSHIP_ should beat HSTORE_: %+v", c)
+	}
+	t.Setenv("HSTORE_CLIENT_SECRET", "e-secret")
+	if c, _ := AppGallery(); c.Source != "env DROIDSHIP_APPGALLERY_CLIENT_ID" {
+		t.Fatalf("source should name the variable: %+v", c)
 	}
 }
 
