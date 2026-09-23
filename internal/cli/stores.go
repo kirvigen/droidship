@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kirvigen/droidship/internal/gplaycmd"
+	"github.com/kirvigen/droidship/internal/rustorecmd"
 	"github.com/kirvigen/droidship/internal/store"
 )
 
@@ -12,6 +13,8 @@ func openRealStore(name string) (store.Store, error) {
 	switch name {
 	case store.GPlay:
 		return gplaycmd.NewStore()
+	case store.RuStore:
+		return rustorecmd.NewStore()
 	}
 	return nil, fmt.Errorf("%s: adapter not wired yet", name)
 }
@@ -21,6 +24,8 @@ func realConfigured(name string) bool {
 	switch name {
 	case store.GPlay:
 		return gplaycmd.Configured()
+	case store.RuStore:
+		return rustorecmd.Configured()
 	}
 	return false
 }
