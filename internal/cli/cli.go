@@ -28,7 +28,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 	}
 	switch args[0] {
 	case "version", "--version":
-		fmt.Fprintln(stdout, "droidship", version.Version)
+		fmt.Fprintln(stdout, "droidship", version.String())
 		return ExitOK
 	case "help", "-h", "--help":
 		fmt.Fprint(stdout, usage)

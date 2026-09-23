@@ -61,7 +61,7 @@ func Run(args []string) int {
 	cmd, rest := args[0], args[1:]
 	switch cmd {
 	case "version", "--version":
-		fmt.Println("droidship", version.Version)
+		fmt.Println("droidship", version.String())
 		return 0
 	case "help", "-h", "--help":
 		fmt.Print(usage)

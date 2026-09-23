@@ -1,0 +1,31 @@
+version: 2
+project_name: droidship
+
+builds:
+  - main: ./cmd/droidship
+    env: [CGO_ENABLED=0]
+    goos: [darwin, linux, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X github.com/kirvigen/droidship/internal/version.Version={{.Version}}
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - README.ru.md
+      - LICENSE
+      - CHANGELOG.md
+      - skills/**/*
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  disable: true
+
+release:
+  footer: "See [CHANGELOG.md](https://github.com/kirvigen/droidship/blob/main/CHANGELOG.md)."

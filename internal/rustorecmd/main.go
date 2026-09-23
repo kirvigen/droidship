@@ -48,7 +48,7 @@ func Run(args []string) int {
 	}
 	cmd, rest := args[0], args[1:]
 	if cmd == "version" || cmd == "--version" {
-		fmt.Println("droidship", version.Version)
+		fmt.Println("droidship", version.String())
 		return 0
 	}
 	if cmd == "help" || cmd == "-h" || cmd == "--help" {

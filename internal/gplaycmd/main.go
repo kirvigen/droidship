@@ -77,7 +77,7 @@ func Run(args []string) int {
 		return 2
 	}
 	if c := args[0]; c == "version" || c == "--version" {
-		fmt.Println("droidship", version.Version)
+		fmt.Println("droidship", version.String())
 		return 0
 	}
 	if c := args[0]; c == "help" || c == "-h" || c == "--help" {
