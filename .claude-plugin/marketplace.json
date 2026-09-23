@@ -1,0 +1,11 @@
+{
+  "name": "droidship",
+  "owner": { "name": "Kirill Konishchev", "url": "https://github.com/kirvigen" },
+  "plugins": [
+    {
+      "name": "droidship",
+      "source": "./",
+      "description": "Skills for the droidship CLI: releases, staged rollouts and reviews across Google Play, RuStore and AppGallery, plus Play Console work that no API covers."
+    }
+  ]
+}
