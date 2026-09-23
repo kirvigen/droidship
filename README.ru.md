@@ -16,8 +16,8 @@
 $ droidship status com.example
 STORE       TRACK       VERSION      STATUS                 ROLLOUT  ID
 gplay       production  30           completed
-rustore     manual      1.4.16 (29)  MODERATION                      2064841476
-appgallery  latest      1.4.16 (29)  pending update review           2045930928454271552
+rustore     manual      1.4.16 (29)  MODERATION                      2051234567
+appgallery  latest      1.4.16 (29)  pending update review           1998765432101234567
 appgallery  live        1.4.11 (23)  on shelf
 ```
 

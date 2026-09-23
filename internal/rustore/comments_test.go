@@ -28,7 +28,7 @@ func TestCommentsAndFeedbacks(t *testing.T) {
 			if r.URL.Query().Get("size") != "100" || r.URL.Query().Get("page") != "0" {
 				t.Errorf("query = %q", r.URL.RawQuery)
 			}
-			w.Write([]byte(`{"code":"OK","body":[{"commentId":7,"userName":"Даня","appRating":2,
+			w.Write([]byte(`{"code":"OK","body":[{"commentId":7,"userName":"Анна","appRating":2,
 				"commentText":"не грузится","commentDateIso":"2026-04-13T05:03:02.552Z","appVersionName":"1.18"}]}`))
 		},
 		"GET /public/v1/application/com.x/feedback": func(w http.ResponseWriter, r *http.Request) {
