@@ -27,6 +27,12 @@ type fakePlay struct {
 	deletedEdits  []string
 	trackReceived play.Track
 	uploaded      bool
+
+	// Served to the unified-verb adapter tests.
+	tracks  []play.Track
+	reviews string // raw JSON of a reviews list response
+	listing string // raw JSON of a listing
+	replied string
 }
 
 func (f *fakePlay) handler() http.HandlerFunc {
@@ -40,6 +46,28 @@ func (f *fakePlay) handler() http.HandlerFunc {
 		case r.Method == "POST" && strings.Contains(p, "/upload/") && strings.HasSuffix(p, "/bundles"):
 			f.uploaded = true
 			fmt.Fprint(w, `{"versionCode":14,"sha256":"abc123"}`)
+		case r.Method == "GET" && strings.HasSuffix(p, "/tracks"):
+			_ = json.NewEncoder(w).Encode(map[string]any{"tracks": f.tracks})
+		case r.Method == "GET" && strings.Contains(p, "/tracks/"):
+			name := p[strings.LastIndex(p, "/")+1:]
+			for _, tr := range f.tracks {
+				if tr.Track == name {
+					_ = json.NewEncoder(w).Encode(tr)
+					return
+				}
+			}
+			_ = json.NewEncoder(w).Encode(play.Track{Track: name})
+		case r.Method == "GET" && strings.HasSuffix(p, "/reviews"):
+			fmt.Fprint(w, f.reviews)
+		case r.Method == "POST" && strings.HasSuffix(p, ":reply"):
+			var body struct {
+				ReplyText string `json:"replyText"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			f.replied = body.ReplyText
+			fmt.Fprint(w, `{"result":{"replyText":"ok"}}`)
+		case r.Method == "GET" && strings.Contains(p, "/listings/"):
+			fmt.Fprint(w, f.listing)
 		case r.Method == "PUT" && strings.Contains(p, "/tracks/"):
 			if err := json.NewDecoder(r.Body).Decode(&f.trackReceived); err != nil {
 				f.t.Errorf("decode track: %v", err)
