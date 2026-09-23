@@ -135,9 +135,12 @@ func TestPublishNeedsExactlyOneFile(t *testing.T) {
 
 func TestUnsupportedExitsThree(t *testing.T) {
 	withFakes(t, &fake{name: "rustore", notesErr: store.Unsupported("rustore", "notes", "why")})
-	code, _, errOut := run(t, "notes", "com.x", "--store", "rustore", "--text", "hi")
+	code, out, errOut := run(t, "notes", "com.x", "--store", "rustore", "--text", "hi")
 	if code != 3 || !strings.Contains(errOut, "unsupported by rustore") {
 		t.Fatalf("exit %d, stderr %q", code, errOut)
+	}
+	if out != "" {
+		t.Fatalf("no table when every store failed, got %q", out)
 	}
 }
 

@@ -30,6 +30,21 @@ func (v *verbRun) report(results []result, header string, rows func(r result) []
 		v.emitJSON(list)
 		return
 	}
+	if v.code == ExitOK || anySucceeded(results) {
+		v.printTable(results, header, rows)
+	}
+}
+
+func anySucceeded(results []result) bool {
+	for _, r := range results {
+		if r.Err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+func (v *verbRun) printTable(results []result, header string, rows func(r result) []string) {
 	w := tabwriter.NewWriter(v.stdout, 0, 0, 2, ' ', 0)
 	fmt.Fprintln(w, header)
 	for _, r := range results {
