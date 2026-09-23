@@ -33,3 +33,12 @@ func TestUnknownCommand(t *testing.T) {
 		t.Fatalf("code %d, stderr %q", code, errOut)
 	}
 }
+
+func TestStoreNamespacesRoute(t *testing.T) {
+	for _, store := range []string{"gplay", "rustore", "appgallery"} {
+		// Legacy help prints to os.Stdout; exit 0 proves the namespace routed.
+		if code, _, _ := run(t, store, "help"); code != 0 {
+			t.Fatalf("%s help: exit %d", store, code)
+		}
+	}
+}
