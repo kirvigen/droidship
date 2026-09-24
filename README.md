@@ -13,7 +13,7 @@ AI agent.
 
 [Читать на русском](README.ru.md)
 
-<p align="center"><img src="docs/assets/demo.gif" alt="droidship status, reviews, listing and an unsupported command across three stores" width="100%"></p>
+<p align="center"><img src="docs/assets/demo.gif" alt="droidship: status and reviews across three stores, a dry-run publish to all of them, JSON for agents" width="100%"></p>
 
 - **One command, three consoles.** `publish`, `release`, `rollout`, `reviews` and `reply` work the
   same way in every store. `--store all` runs them everywhere at once.

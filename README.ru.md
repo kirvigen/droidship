@@ -13,7 +13,7 @@
 
 [Read in English](README.md)
 
-<p align="center"><img src="docs/assets/demo.gif" alt="droidship: status, отзывы, карточка и неподдерживаемая команда в трёх сторах" width="100%"></p>
+<p align="center"><img src="docs/assets/demo.gif" alt="droidship: статус и отзывы из трёх сторов, репетиция публикации во все сразу, JSON для агентов" width="100%"></p>
 
 - **Одна команда вместо трёх консолей.** `publish`, `release`, `rollout`, `reviews` и `reply` работают
   одинаково во всех сторах. `--store all` запускает их везде сразу.
