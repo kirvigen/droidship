@@ -2,10 +2,13 @@ package appgallerycmd
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/kirvigen/droidship/internal/appgallery"
 	"github.com/kirvigen/droidship/internal/config"
+	"github.com/kirvigen/droidship/internal/store"
 )
 
 func TestPhasedWindow(t *testing.T) {
@@ -41,5 +44,17 @@ func TestAppIDFromConfigOnlyForItsPackage(t *testing.T) {
 	s = &Store{creds: config.AppGalleryCreds{AppID: "42"}, ids: map[string]string{}}
 	if id, _ := s.appID(context.Background(), "com.anything"); id != "42" {
 		t.Fatalf("an app id without a package applies to any package, as in hstore: %q", id)
+	}
+}
+
+func TestPlanFromInfo(t *testing.T) {
+	info := appgallery.AppInfo{VersionNumber: "1.4.16", VersionCode: "29", OnShelfVersionNumber: "1.4.11", OnShelfVersionCode: "23", ReleaseState: 5}
+	p := planFromInfo(info, store.PublishRequest{AAB: "/b/app.aab"})
+	if p.Live != "1.4.11 (23)" || !strings.Contains(p.Action, "app.aab → attach, not submitted") || !strings.Contains(p.Note, "1.4.16 (29) is "+info.StateLabel()) {
+		t.Fatalf("%+v", p)
+	}
+	p = planFromInfo(appgallery.AppInfo{}, store.PublishRequest{APK: "app.apk", GoLive: true, Percent: 20})
+	if p.Live != "nothing on shelf" || !strings.Contains(p.Action, "20% over 7 days") || p.Note != "" {
+		t.Fatalf("%+v", p)
 	}
 }

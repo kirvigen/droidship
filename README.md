@@ -39,6 +39,8 @@ Or download a binary for macOS, Linux or Windows from
 droidship auth                                    # which stores are configured, and as whom
 droidship status com.example                      # what is live where
 droidship publish com.example --store all \
+  --aab app-release.aab --dry-run                 # rehearse: check every store, change nothing
+droidship publish com.example --store all \
   --aab app-release.aab --notes-file whatsnew.txt # upload and stage everywhere
 droidship release com.example --store gplay --percent 10
 droidship reviews com.example --unanswered        # every store, newest first
@@ -158,6 +160,7 @@ droidship auth    [--store S]                          which stores are configur
 droidship status  <pkg> [--store S]                    versions, tracks, review state
 droidship publish <pkg> --store S (--aab F | --apk F)  upload and stage a build
                   [--notes S | --notes-file F] [--lang ru-RU] [--percent P] [--go-live]
+                  [--dry-run]
 droidship release <pkg> --store S [--version V] [--percent P]
 droidship rollout <pkg> --store S --percent P [--version V]
 droidship notes   <pkg> --store S [--lang ru-RU] (--text S | --text-file F)
@@ -169,6 +172,21 @@ droidship listing <pkg> [--store S] [--lang ru-RU]
 `--store` is `gplay`, `rustore`, `appgallery`, a comma list, or `all`. Read commands default to every
 configured store. Commands that change something require `--store`, so nothing ships by accident.
 `reply` takes exactly one store, because a review id belongs to one store.
+
+### Rehearse first
+
+`publish --dry-run` checks every store without changing anything: the credentials reach the app, the
+build format is accepted, and it shows what is live and what publishing would do.
+
+```console
+$ droidship publish com.example --store all --aab app-release.aab --dry-run
+STORE       LIVE NOW     WOULD DO
+gplay       31           upload app-release.aab → draft on production
+rustore     1.4.14 (27)  new draft → upload app-release.aab → moderation, then you release
+                         ! 1.4.16 (29) is in MODERATION now
+appgallery  1.4.11 (23)  upload app-release.aab → attach, not submitted
+                         ! 1.4.16 (29) is pending update review
+```
 
 ### Safe by default
 

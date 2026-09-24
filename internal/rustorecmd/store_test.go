@@ -3,9 +3,11 @@ package rustorecmd
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/kirvigen/droidship/internal/rustore"
 	"github.com/kirvigen/droidship/internal/store"
 )
 
@@ -55,5 +57,21 @@ func TestJoinReviews(t *testing.T) {
 	}
 	if got := joinReviews(list, replies, store.ReviewsQuery{Stars: 2, Limit: 1}); len(got) != 1 || got[0].ID != "7" {
 		t.Fatalf("stars and limit: %+v", got)
+	}
+}
+
+func TestPlanFromVersions(t *testing.T) {
+	versions := []rustore.Version{
+		{VersionID: 3, VersionName: "1.4.16", VersionCode: 29, VersionStatus: "MODERATION"},
+		{VersionID: 2, VersionName: "1.4.14", VersionCode: 27, VersionStatus: "ACTIVE"},
+	}
+	p := planFromVersions(versions, store.PublishRequest{AAB: "/b/app.aab"})
+	if p.Live != "1.4.14 (27)" || !strings.Contains(p.Action, "app.aab") || !strings.Contains(p.Action, "you release") ||
+		!strings.Contains(p.Note, "1.4.16 (29) is in MODERATION") {
+		t.Fatalf("%+v", p)
+	}
+	p = planFromVersions(nil, store.PublishRequest{APK: "app.apk", GoLive: true})
+	if p.Live != "nothing live" || !strings.Contains(p.Action, "live after moderation") {
+		t.Fatalf("%+v", p)
 	}
 }

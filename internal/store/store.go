@@ -29,6 +29,10 @@ type Store interface {
 	// Publish uploads a build and stages it. Unless req.GoLive is set, no user
 	// sees the build until Release runs. Progress goes to log.
 	Publish(ctx context.Context, req PublishRequest, log io.Writer) (PublishResult, error)
+	// Plan checks req against the store without changing anything: the
+	// credentials reach the app, the build format is accepted, and it says
+	// what Publish would do. It backs `publish --dry-run`.
+	Plan(ctx context.Context, req PublishRequest) (PublishPlan, error)
 	Release(ctx context.Context, req ReleaseRequest, log io.Writer) error
 	Rollout(ctx context.Context, req RolloutRequest, log io.Writer) error
 	Notes(ctx context.Context, pkg, lang, text string) error
@@ -70,6 +74,13 @@ type PublishRequest struct {
 type PublishResult struct {
 	State string `json:"state"`
 	Next  string `json:"next,omitempty"` // the command that makes it live, when one is needed
+}
+
+// PublishPlan is what Publish would do, checked against the live store.
+type PublishPlan struct {
+	Live   string `json:"live"`           // what users get today
+	Action string `json:"action"`         // what publish would do
+	Note   string `json:"note,omitempty"` // anything to know before going ahead
 }
 
 // ReleaseRequest makes a staged build live. An empty Version means "the staged one".

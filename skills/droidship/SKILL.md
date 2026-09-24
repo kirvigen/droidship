@@ -28,6 +28,9 @@ the README. Never ask them to paste a secret into the chat.
 ## Release a build
 
     droidship status  com.example --json
+    droidship publish com.example --store all --aab app-release.aab --dry-run --json
+    # show the human the plan and every "note" (a version already in review, a draft that
+    # would be replaced), then:
     droidship publish com.example --store gplay,rustore,appgallery --aab app-release.aab \
         --notes-file whatsnew-ru.txt --json
 

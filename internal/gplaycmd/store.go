@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -240,4 +241,48 @@ func langOr(lang string) string {
 		return defaultLang
 	}
 	return lang
+}
+
+func (s *Store) Plan(ctx context.Context, req store.PublishRequest) (store.PublishPlan, error) {
+	if req.AAB == "" {
+		return store.PublishPlan{}, errors.New("Google Play accepts only an Android App Bundle: pass --aab")
+	}
+	var track *play.Track
+	err := withEdit(ctx, s.client, req.Package, func(editID string) (err error) {
+		track, err = s.client.Track(ctx, req.Package, editID, play.TrackProduction)
+		return err
+	})
+	if err != nil {
+		return store.PublishPlan{}, err
+	}
+	return planFromTrack(track, req), nil
+}
+
+// planFromTrack describes what Publish would do to the production track.
+func planFromTrack(track *play.Track, req store.PublishRequest) store.PublishPlan {
+	p := store.PublishPlan{Live: "nothing on production"}
+	for _, r := range track.Releases {
+		codes := strings.Join(r.VersionCodes, ",")
+		switch r.Status {
+		case play.StatusDraft:
+			p.Note = "draft " + codes + " is already staged; publishing replaces it"
+		case play.StatusCompleted, play.StatusInProgress, play.StatusHalted:
+			if p.Live == "nothing on production" {
+				p.Live = codes
+				if r.Status != play.StatusCompleted {
+					p.Live += fmt.Sprintf(" at %g%%", r.UserFraction*100)
+				}
+			}
+		}
+	}
+	file := filepath.Base(req.AAB)
+	p.Action = "upload " + file + " → draft on production"
+	if req.GoLive {
+		who := "everyone"
+		if req.Percent > 0 && req.Percent < 100 {
+			who = fmt.Sprintf("%g%%", req.Percent)
+		}
+		p.Action = "upload " + file + " → roll out to " + who + " on production"
+	}
+	return p
 }

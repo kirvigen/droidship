@@ -1,7 +1,7 @@
 {
   "name": "droidship",
   "description": "Ship Android apps to Google Play, RuStore and Huawei AppGallery from one CLI: skills for releases, staged rollouts, reviews and the Play Console.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": { "name": "Kirill Konishchev", "url": "https://github.com/kirvigen" },
   "homepage": "https://github.com/kirvigen/droidship",
   "repository": "https://github.com/kirvigen/droidship",

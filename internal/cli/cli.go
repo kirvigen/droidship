@@ -57,6 +57,7 @@ Unified commands (the same flags for every store):
   status  <pkg> [--store S]                    versions, tracks, review state
   publish <pkg> --store S (--aab F | --apk F)  upload and stage a build
           [--notes S | --notes-file F] [--lang ru-RU] [--percent P] [--go-live]
+          [--dry-run]                          check every store, change nothing
   release <pkg> --store S [--version V] [--percent P]
   rollout <pkg> --store S --percent P [--version V]
   notes   <pkg> --store S [--lang ru-RU] (--text S | --text-file F)

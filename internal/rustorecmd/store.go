@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -234,4 +235,36 @@ func (s *Store) pickVersion(ctx context.Context, pkg, version string, match func
 		}
 	}
 	return 0, errors.New("no version in the right state: pass --version (see droidship status " + pkg + " --store rustore)")
+}
+
+func (s *Store) Plan(ctx context.Context, req store.PublishRequest) (store.PublishPlan, error) {
+	if _, err := partial(req.Percent); err != nil {
+		return store.PublishPlan{}, err
+	}
+	page, err := s.client.Versions(ctx, req.Package, rustore.VersionsOpts{Size: 20})
+	if err != nil {
+		return store.PublishPlan{}, err
+	}
+	return planFromVersions(page.Content, req), nil
+}
+
+// planFromVersions describes what Publish would do, given the app's versions newest first.
+func planFromVersions(versions []rustore.Version, req store.PublishRequest) store.PublishPlan {
+	p := store.PublishPlan{Live: "nothing live"}
+	label := func(v rustore.Version) string { return fmt.Sprintf("%s (%d)", v.VersionName, v.VersionCode) }
+	for _, v := range versions {
+		switch {
+		case isLive(v.VersionStatus) && p.Live == "nothing live":
+			p.Live = label(v)
+		case p.Note == "" && (v.VersionStatus == "DRAFT" || v.VersionStatus == "MODERATION" ||
+			v.VersionStatus == "AUTO_CHECK" || isReady(v.VersionStatus)):
+			p.Note = label(v) + " is in " + v.VersionStatus + " now"
+		}
+	}
+	file := filepath.Base(req.AAB + req.APK)
+	p.Action = "new draft → upload " + file + " → moderation, then you release"
+	if req.GoLive {
+		p.Action = "new draft → upload " + file + " → live after moderation"
+	}
+	return p
 }

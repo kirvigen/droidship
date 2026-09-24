@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -250,4 +251,36 @@ func langOr(lang string) string {
 		return defaultLang
 	}
 	return lang
+}
+
+func (s *Store) Plan(ctx context.Context, req store.PublishRequest) (store.PublishPlan, error) {
+	id, err := s.appID(ctx, req.Package)
+	if err != nil {
+		return store.PublishPlan{}, err
+	}
+	info, err := s.client.AppInfo(ctx, id, appgallery.ReleaseFull)
+	if err != nil {
+		return store.PublishPlan{}, err
+	}
+	return planFromInfo(info, req), nil
+}
+
+// planFromInfo describes what Publish would do, given the app's current state.
+func planFromInfo(info appgallery.AppInfo, req store.PublishRequest) store.PublishPlan {
+	p := store.PublishPlan{Live: "nothing on shelf"}
+	if info.OnShelfVersionNumber != "" {
+		p.Live = fmt.Sprintf("%s (%s)", info.OnShelfVersionNumber, info.OnShelfVersionCode)
+	}
+	if info.VersionNumber != "" && info.VersionCode != info.OnShelfVersionCode {
+		p.Note = fmt.Sprintf("%s (%s) is %s", info.VersionNumber, info.VersionCode, info.StateLabel())
+	}
+	file := filepath.Base(req.AAB + req.APK)
+	p.Action = "upload " + file + " → attach, not submitted"
+	if req.GoLive {
+		p.Action = "upload " + file + " → submit for review"
+		if req.Percent > 0 && req.Percent < 100 {
+			p.Action += fmt.Sprintf(", then %g%% over %d days", req.Percent, phasedDays)
+		}
+	}
+	return p
 }

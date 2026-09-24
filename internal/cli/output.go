@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -155,6 +156,7 @@ func verbPublish(v *verbRun) error {
 	v.fs.StringVar(&req.Lang, "lang", "ru-RU", "language of the release notes")
 	v.fs.Float64Var(&req.Percent, "percent", 0, "staged rollout percent, 0 < p < 100")
 	v.fs.BoolVar(&req.GoLive, "go-live", false, "release to users now instead of staging")
+	dryRun := v.fs.Bool("dry-run", false, "check every store and show what would happen; change nothing")
 	if err := v.parse(); err != nil {
 		return err
 	}
@@ -171,6 +173,25 @@ func verbPublish(v *verbRun) error {
 	req.Package = pkg
 	if req.Notes, err = readText(notes, notesFile, "notes"); err != nil {
 		return err
+	}
+	file := req.AAB + req.APK
+	if st, err := os.Stat(file); err != nil || st.IsDir() {
+		return fmt.Errorf("no such build file: %s", file)
+	}
+	if *dryRun {
+		results := v.each(func(s store.Store) (any, error) { return s.Plan(v.ctx, req) })
+		v.report(results, "STORE\tLIVE NOW\tWOULD DO", func(r result) []string {
+			p := r.Value.(store.PublishPlan)
+			lines := []string{r.Store + "\t" + p.Live + "\t" + p.Action}
+			if p.Note != "" {
+				lines = append(lines, "\t\t! "+p.Note)
+			}
+			return lines
+		})
+		if !v.json {
+			fmt.Fprintln(v.stderr, "\ndry run: nothing was uploaded. Run the same command without --dry-run to do it.")
+		}
+		return nil
 	}
 	results := v.each(func(s store.Store) (any, error) { return s.Publish(v.ctx, req, v.stderr) })
 	v.report(results, "STORE\tSTATE\tNEXT", func(r result) []string {
@@ -283,6 +304,17 @@ func verbReviews(v *verbRun) error {
 		v.emitJSON(all)
 		return nil
 	}
+	// The review text takes whatever the terminal has left after the other columns.
+	fixed := []int{len("STORE"), len("ID"), len("STARS"), len(time.DateOnly), len("REPLIED")}
+	for _, r := range results {
+		if r.Err == nil {
+			for _, x := range r.Value.([]store.Review) {
+				fixed[0] = max(fixed[0], len([]rune(r.Store)))
+				fixed[1] = max(fixed[1], len([]rune(x.ID)))
+			}
+		}
+	}
+	budget := textBudget(termWidth(v.stdout), fixed, 70, 20)
 	v.report(results, "STORE\tID\tSTARS\tDATE\tREPLIED\tTEXT", func(r result) []string {
 		var lines []string
 		for _, x := range r.Value.([]store.Review) {
@@ -291,7 +323,7 @@ func verbReviews(v *verbRun) error {
 				replied = "yes"
 			}
 			lines = append(lines, fmt.Sprintf("%s\t%s\t%d\t%s\t%s\t%s", r.Store, x.ID, x.Stars,
-				x.Time.Format(time.DateOnly), replied, oneLine(x.Text, 70)))
+				x.Time.Format(time.DateOnly), replied, oneLine(x.Text, budget)))
 		}
 		return lines
 	})
@@ -342,9 +374,19 @@ func verbListing(v *verbRun) error {
 		return err
 	}
 	results := v.each(func(s store.Store) (any, error) { return s.Listing(v.ctx, pkg, lang) })
+	fixed := []int{len("STORE"), len("LANG"), len("TITLE")}
+	for _, r := range results {
+		if r.Err == nil {
+			l := r.Value.(store.Listing)
+			fixed[0] = max(fixed[0], len([]rune(r.Store)))
+			fixed[1] = max(fixed[1], len([]rune(l.Lang)))
+			fixed[2] = max(fixed[2], len([]rune(l.Title)))
+		}
+	}
+	budget := textBudget(termWidth(v.stdout), fixed, 60, 20)
 	v.report(results, "STORE\tLANG\tTITLE\tSHORT", func(r result) []string {
 		l := r.Value.(store.Listing)
-		return []string{r.Store + "\t" + l.Lang + "\t" + l.Title + "\t" + oneLine(l.Short, 60)}
+		return []string{r.Store + "\t" + l.Lang + "\t" + l.Title + "\t" + oneLine(l.Short, budget)}
 	})
 	return nil
 }

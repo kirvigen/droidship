@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.2.0 — 2026-09-24
+
+### Added
+- `publish --dry-run`: checks every selected store without changing anything (access to the app,
+  build format, rollout step) and shows what is live and what publishing would do, with warnings
+  such as a version already in review.
+- Tables fit the terminal: the review text and listing columns shrink to the terminal width
+  (or `$COLUMNS`) instead of wrapping.
+
 ## v0.1.0 — 2026-09-23
 
 First release. Merges three standalone CLIs into one:

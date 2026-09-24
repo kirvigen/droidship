@@ -169,3 +169,30 @@ func TestStoreListing(t *testing.T) {
 }
 
 func itoa(n int64) string { return strconv.FormatInt(n, 10) }
+
+func TestPlanFromTrack(t *testing.T) {
+	track := &play.Track{Track: "production", Releases: []play.TrackRelease{
+		{VersionCodes: []string{"32"}, Status: play.StatusDraft},
+		{VersionCodes: []string{"31"}, Status: play.StatusInProgress, UserFraction: 0.2},
+	}}
+	p := planFromTrack(track, store.PublishRequest{AAB: "/b/app.aab"})
+	if p.Live != "31 at 20%" || !strings.Contains(p.Action, "app.aab → draft on production") || !strings.Contains(p.Note, "32") {
+		t.Fatalf("%+v", p)
+	}
+	p = planFromTrack(&play.Track{Track: "production"}, store.PublishRequest{AAB: "app.aab", GoLive: true, Percent: 10})
+	if p.Live != "nothing on production" || !strings.Contains(p.Action, "roll out to 10%") {
+		t.Fatalf("%+v", p)
+	}
+}
+
+func TestStorePlanChecksAccessAndFormat(t *testing.T) {
+	if _, err := (&Store{}).Plan(context.Background(), store.PublishRequest{APK: "a.apk"}); err == nil {
+		t.Fatal("Play takes bundles only")
+	}
+	f := &fakePlay{t: t, tracks: []play.Track{{Track: "production", Releases: []play.TrackRelease{
+		{VersionCodes: []string{"31"}, Status: play.StatusCompleted}}}}}
+	p, err := testStore(t, f).Plan(context.Background(), store.PublishRequest{Package: "com.x", AAB: "app.aab"})
+	if err != nil || p.Live != "31" || f.commits != 0 || f.uploaded {
+		t.Fatalf("%+v %v; a plan must change nothing", p, err)
+	}
+}

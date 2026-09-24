@@ -40,6 +40,8 @@ go install github.com/kirvigen/droidship/cmd/droidship@latest
 droidship auth                                    # какие сторы подключены и под кем
 droidship status com.example                      # что где опубликовано
 droidship publish com.example --store all \
+  --aab app-release.aab --dry-run                 # репетиция: проверить все сторы, ничего не меняя
+droidship publish com.example --store all \
   --aab app-release.aab --notes-file whatsnew.txt # залить и поставить в очередь везде
 droidship release com.example --store gplay --percent 10
 droidship reviews com.example --unanswered        # все сторы, новые сверху
@@ -161,6 +163,7 @@ droidship auth    [--store S]                          какие сторы п�
 droidship status  <pkg> [--store S]                    версии, треки, статус проверки
 droidship publish <pkg> --store S (--aab F | --apk F)  залить и поставить в очередь
                   [--notes S | --notes-file F] [--lang ru-RU] [--percent P] [--go-live]
+                  [--dry-run]
 droidship release <pkg> --store S [--version V] [--percent P]
 droidship rollout <pkg> --store S --percent P [--version V]
 droidship notes   <pkg> --store S [--lang ru-RU] (--text S | --text-file F)
@@ -172,6 +175,21 @@ droidship listing <pkg> [--store S] [--lang ru-RU]
 `--store` — это `gplay`, `rustore`, `appgallery`, список через запятую или `all`. Команды чтения по
 умолчанию идут во все подключённые сторы. Команды, которые что-то меняют, требуют `--store`, чтобы
 ничего не уехало случайно. `reply` принимает ровно один стор: id отзыва принадлежит одному стору.
+
+### Сначала репетиция
+
+`publish --dry-run` проверяет каждый стор, ничего не меняя: доступ к приложению есть, формат сборки
+подходит. Показывает, что сейчас опубликовано и что сделает публикация.
+
+```console
+$ droidship publish com.example --store all --aab app-release.aab --dry-run
+STORE       LIVE NOW     WOULD DO
+gplay       31           upload app-release.aab → draft on production
+rustore     1.4.14 (27)  new draft → upload app-release.aab → moderation, then you release
+                         ! 1.4.16 (29) is in MODERATION now
+appgallery  1.4.11 (23)  upload app-release.aab → attach, not submitted
+                         ! 1.4.16 (29) is pending update review
+```
 
 ### Безопасно по умолчанию
 

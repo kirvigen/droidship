@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -12,11 +14,13 @@ import (
 )
 
 type fake struct {
-	name     string
-	reviews  []store.Review
-	replied  string
-	notesErr error
-	publish  store.PublishRequest
+	name      string
+	reviews   []store.Review
+	replied   string
+	notesErr  error
+	publish   store.PublishRequest
+	published bool
+	planErr   error
 }
 
 func (f *fake) Name() string { return f.name }
@@ -27,11 +31,17 @@ func (f *fake) Status(context.Context, string) ([]store.Release, error) {
 	return []store.Release{{Track: "production", Version: "1.0 (10)", Status: "live"}}, nil
 }
 func (f *fake) Publish(_ context.Context, r store.PublishRequest, _ io.Writer) (store.PublishResult, error) {
-	f.publish = r
+	f.publish, f.published = r, true
 	if r.GoLive {
 		return store.PublishResult{State: "live"}, nil
 	}
 	return store.PublishResult{State: "staged", Next: "droidship release " + r.Package + " --store " + f.name}, nil
+}
+func (f *fake) Plan(_ context.Context, r store.PublishRequest) (store.PublishPlan, error) {
+	if f.planErr != nil {
+		return store.PublishPlan{}, f.planErr
+	}
+	return store.PublishPlan{Live: "1.0 (10)", Action: "upload " + r.AAB + " to " + f.name, Note: f.name + " note"}, nil
 }
 func (f *fake) Release(context.Context, store.ReleaseRequest, io.Writer) error { return nil }
 func (f *fake) Rollout(context.Context, store.RolloutRequest, io.Writer) error { return nil }
@@ -110,7 +120,7 @@ func TestWriteVerbNeedsAnExplicitStore(t *testing.T) {
 func TestPublishStagesByDefault(t *testing.T) {
 	g := &fake{name: "gplay"}
 	withFakes(t, g)
-	code, out, _ := run(t, "publish", "com.x", "--store", "gplay", "--aab", "a.aab", "--whats-new", "fixes", "--json")
+	code, out, _ := run(t, "publish", "com.x", "--store", "gplay", "--aab", tempFile(t, "a.aab"), "--whats-new", "fixes", "--json")
 	if code != 0 {
 		t.Fatalf("exit %d", code)
 	}
@@ -124,6 +134,50 @@ func TestPublishStagesByDefault(t *testing.T) {
 	if g.publish.GoLive || g.publish.Notes != "fixes" || g.publish.Lang != "ru-RU" {
 		t.Fatalf("request %+v", g.publish)
 	}
+}
+
+func TestPublishDryRunPlansWithoutPublishing(t *testing.T) {
+	g, r := &fake{name: "gplay"}, &fake{name: "rustore"}
+	withFakes(t, g, r)
+	aab := tempFile(t, "app.aab")
+	code, out, errOut := run(t, "publish", "com.x", "--store", "all", "--aab", aab, "--dry-run")
+	if code != 0 {
+		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	if g.published || r.published {
+		t.Fatal("--dry-run must not publish")
+	}
+	for _, want := range []string{"LIVE NOW", "WOULD DO", "upload " + aab + " to gplay", "rustore note", "dry run"} {
+		if !strings.Contains(out+errOut, want) {
+			t.Fatalf("missing %q in:\n%s%s", want, out, errOut)
+		}
+	}
+}
+
+func TestPublishDryRunReportsAStoreThatWouldFail(t *testing.T) {
+	withFakes(t, &fake{name: "gplay", planErr: errors.New("Google Play accepts only an Android App Bundle")}, &fake{name: "rustore"})
+	code, out, errOut := run(t, "publish", "com.x", "--store", "gplay,rustore", "--apk", tempFile(t, "app.apk"), "--dry-run", "--json")
+	if code != 1 || !strings.Contains(errOut, "gplay: Google Play accepts only") || !strings.Contains(out, `"store": "rustore"`) {
+		t.Fatalf("exit %d\nout %s\nerr %s", code, out, errOut)
+	}
+}
+
+func TestPublishChecksTheFileExists(t *testing.T) {
+	g := &fake{name: "gplay"}
+	withFakes(t, g)
+	code, _, errOut := run(t, "publish", "com.x", "--store", "gplay", "--aab", "/nope/app.aab")
+	if code != 1 || !strings.Contains(errOut, "/nope/app.aab") || g.published {
+		t.Fatalf("exit %d, stderr %q", code, errOut)
+	}
+}
+
+func tempFile(t *testing.T, name string) string {
+	t.Helper()
+	p := filepath.Join(t.TempDir(), name)
+	if err := os.WriteFile(p, []byte("x"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return p
 }
 
 func TestPublishNeedsExactlyOneFile(t *testing.T) {
