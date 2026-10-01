@@ -169,9 +169,38 @@ func (s *Store) Reviews(ctx context.Context, q store.ReviewsQuery) ([]store.Revi
 	return joinReviews(list, replies, q), nil
 }
 
+// Reply answers a review, or edits the answer it already has: RuStore refuses
+// a second answer to the same review, but lets the first one be replaced.
 func (s *Store) Reply(ctx context.Context, pkg, reviewID, text string) error {
-	_, err := s.client.Answer(ctx, pkg, reviewID, text)
+	answerID, err := s.liveAnswer(ctx, pkg, reviewID)
+	if err != nil {
+		return err
+	}
+	if answerID != "" {
+		_, err = s.client.EditAnswer(ctx, pkg, answerID, text)
+		return err
+	}
+	_, err = s.client.Answer(ctx, pkg, reviewID, text)
 	return err
+}
+
+// liveAnswer returns the id of the current (not DELETED) answer to a review, or "".
+func (s *Store) liveAnswer(ctx context.Context, pkg, reviewID string) (string, error) {
+	for page := 0; page < maxAnswerPages; page++ {
+		answers, err := s.client.Feedbacks(ctx, pkg, page, pageSize)
+		if err != nil {
+			return "", err
+		}
+		for _, a := range answers {
+			if a.CommentID == reviewID && a.Status != "DELETED" {
+				return a.ID, nil
+			}
+		}
+		if len(answers) < pageSize {
+			break
+		}
+	}
+	return "", nil
 }
 
 // rustoreComment is a review before the join with answers.

@@ -171,7 +171,8 @@ droidship listing <pkg> [--store S] [--lang ru-RU]
 
 `--store` is `gplay`, `rustore`, `appgallery`, a comma list, or `all`. Read commands default to every
 configured store. Commands that change something require `--store`, so nothing ships by accident.
-`reply` takes exactly one store, because a review id belongs to one store.
+`reply` takes exactly one store, because a review id belongs to one store. Replying to a review that
+already has your answer edits it (RuStore sends the new text back to moderation).
 
 ### Rehearse first
 

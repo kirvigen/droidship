@@ -61,6 +61,18 @@ func (c *Client) Answer(ctx context.Context, pkg, commentID, text string) (int64
 	return out.ID, err
 }
 
+// EditAnswer replaces the text of an existing developer answer. RuStore keeps the
+// old answer as DELETED and returns the id of the new one, which goes back to
+// moderation.
+func (c *Client) EditAnswer(ctx context.Context, pkg, answerID, text string) (int64, error) {
+	var out struct {
+		ID int64 `json:"id"`
+	}
+	err := c.postJSON(ctx, "/public/v1/application/"+url.PathEscape(pkg)+"/feedback/"+url.PathEscape(answerID),
+		nil, map[string]string{"message": text}, &out)
+	return out.ID, err
+}
+
 func pageQuery(page, size int) map[string]string {
 	return map[string]string{"page": strconv.Itoa(page), "size": strconv.Itoa(size)}
 }

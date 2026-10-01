@@ -64,3 +64,20 @@ func TestAnswer(t *testing.T) {
 		t.Fatalf("id %d, %v", id, err)
 	}
 }
+
+func TestEditAnswer(t *testing.T) {
+	c := routes(t, map[string]http.HandlerFunc{
+		"POST /public/v1/application/com.x/feedback/9": func(w http.ResponseWriter, r *http.Request) {
+			var body map[string]string
+			json.NewDecoder(r.Body).Decode(&body)
+			if body["message"] != "новый текст" {
+				t.Errorf("message = %q", body["message"])
+			}
+			w.Write([]byte(`{"code":"OK","body":{"id":10}}`))
+		},
+	})
+	id, err := c.EditAnswer(t.Context(), "com.x", "9", "новый текст")
+	if err != nil || id != 10 {
+		t.Fatalf("id %d, %v", id, err)
+	}
+}

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- `reply --store rustore` edits the answer a review already has instead of failing: RuStore keeps the
+  old answer as DELETED and sends the new text back to moderation. Google Play already overwrote.
+
 ## v0.2.0 — 2026-09-24
 
 ### Added

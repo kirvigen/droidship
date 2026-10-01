@@ -2,7 +2,12 @@ package rustorecmd
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -73,5 +78,45 @@ func TestPlanFromVersions(t *testing.T) {
 	p = planFromVersions(nil, store.PublishRequest{APK: "app.apk", GoLive: true})
 	if p.Live != "nothing live" || !strings.Contains(p.Action, "live after moderation") {
 		t.Fatalf("%+v", p)
+	}
+}
+
+func TestReplyEditsAnExistingAnswer(t *testing.T) {
+	var calls []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		key := r.Method + " " + r.URL.Path
+		if key != "POST /public/auth" {
+			calls = append(calls, key)
+		}
+		switch key {
+		case "POST /public/auth":
+			fmt.Fprint(w, `{"code":"OK","body":{"jwe":"t","ttl":900}}`)
+		case "GET /public/v1/application/com.x/feedback":
+			fmt.Fprint(w, `{"code":"OK","body":[{"id":"5","commentId":"7","status":"DELETED"},{"id":"6","commentId":"7","status":"PUBLISHED"}]}`)
+		default:
+			fmt.Fprint(w, `{"code":"OK","body":{"id":1}}`)
+		}
+	}))
+	defer srv.Close()
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := rustore.NewWithKey("42", key)
+	c.BaseURL = srv.URL
+	s := &Store{client: c}
+
+	if err := s.Reply(t.Context(), "com.x", "7", "новый"); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Reply(t.Context(), "com.x", "8", "первый"); err != nil {
+		t.Fatal(err)
+	}
+	want := []string{
+		"GET /public/v1/application/com.x/feedback", "POST /public/v1/application/com.x/feedback/6",
+		"GET /public/v1/application/com.x/feedback", "POST /public/v1/application/com.x/feedback",
+	}
+	if strings.Join(calls, "|") != strings.Join(want, "|") {
+		t.Fatalf("calls = %v", calls)
 	}
 }
